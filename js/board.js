@@ -40,6 +40,43 @@
   }
   buildBoardSkeleton();
 
+  // ---- Square-fit: pin the board to the largest square that fits BOTH
+  // the available width and height, so it never overflows the viewport
+  // and never renders as a stretched non-square rectangle. CSS alone
+  // (flex + aspect-ratio) can clamp one axis but not reconcile both when
+  // the width and height budgets differ, so this is done in JS. ----
+  function fitSquareBoard() {
+    const wrap = boardEl.parentElement; // .board-wrap
+    if (!wrap) return;
+    boardEl.style.width = "";
+    boardEl.style.height = "";
+    // clientWidth/clientHeight include the wrapper's own padding, but a
+    // child's width/height is resolved against the wrapper's CONTENT box
+    // (inside the padding) — subtract it so the square isn't over-measured.
+    const cs = getComputedStyle(wrap);
+    const padX = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+    const padY = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    const availableWidth = wrap.clientWidth - padX;
+    const availableHeight = wrap.clientHeight - padY;
+    const size = Math.max(0, Math.floor(Math.min(availableWidth, availableHeight)));
+    if (size > 0) {
+      boardEl.style.width = size + "px";
+      boardEl.style.height = size + "px";
+    }
+  }
+  let boardFitQueued = false;
+  function scheduleBoardFit() {
+    if (boardFitQueued) return;
+    boardFitQueued = true;
+    requestAnimationFrame(() => { boardFitQueued = false; fitSquareBoard(); });
+  }
+  window.addEventListener("resize", scheduleBoardFit);
+  // Re-fit once more after every resource (fonts, images) has finished
+  // loading — late web-font swaps or a slow-loading QR canvas can shift
+  // sibling heights slightly after the very first fit runs.
+  window.addEventListener("load", scheduleBoardFit);
+  scheduleBoardFit();
+
   function pieceIcon(pieceId) {
     const def = GameEngine.findPieceDef(pieceId);
     return def ? def.icon : "shield";
@@ -496,6 +533,9 @@
     updateBoardCountdown(state);
     renderLog(state);
     renderWin(state);
+    // Vote strip / now-playing banners toggle visibility on state changes,
+    // which shifts how much vertical room the board has — re-fit it.
+    scheduleBoardFit();
   }
 
   // ---- Board-side countdown timer ----

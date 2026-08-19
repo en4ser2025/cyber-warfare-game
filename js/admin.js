@@ -47,10 +47,61 @@
     .then(svg => { document.getElementById("sprite-mount").innerHTML = svg; })
     .catch(err => console.error("sprite load failed", err));
 
+  // ---------------- BOARD SQUARE-FIT ----------------
+  // CSS alone (flex + aspect-ratio) can't reliably size a square that fits
+  // BOTH the available width and the available height at once when the two
+  // budgets differ (e.g. a wide-but-short window, or a narrow side-panel
+  // column) — some browsers stretch one axis via flex-grow and only clamp
+  // the other, leaving a non-square, possibly overflowing board. This pins
+  // the board to whichever budget is smaller so it always fits on screen.
+  function fitSquareBoard(boardEl) {
+    if (!boardEl) return;
+    const wrap = boardEl.parentElement; // .section-body
+    if (!wrap) return;
+    // Clear any previous clamp so the width/height we measure below reflect
+    // the wrapper's true available space, not a stale prior square.
+    boardEl.style.width = "";
+    boardEl.style.height = "";
+    let siblingsHeight = 0;
+    Array.from(wrap.children).forEach(child => {
+      if (child !== boardEl) siblingsHeight += child.getBoundingClientRect().height;
+    });
+    const wrapCs = getComputedStyle(wrap);
+    const gap = parseFloat(wrapCs.rowGap) || 0;
+    const gapCount = Math.max(0, wrap.children.length - 1);
+    // clientWidth/clientHeight include the wrapper's own padding, but a
+    // child's box is laid out inside that padding (the content box) —
+    // subtract it so the square isn't over-measured.
+    const padX = (parseFloat(wrapCs.paddingLeft) || 0) + (parseFloat(wrapCs.paddingRight) || 0);
+    const padY = (parseFloat(wrapCs.paddingTop) || 0) + (parseFloat(wrapCs.paddingBottom) || 0);
+    const availableHeight = (wrap.clientHeight - padY) - siblingsHeight - gap * gapCount;
+    const availableWidth = wrap.clientWidth - padX;
+    const size = Math.max(0, Math.floor(Math.min(availableWidth, availableHeight)));
+    if (size > 0) {
+      boardEl.style.width = size + "px";
+      boardEl.style.height = size + "px";
+    }
+  }
+  let boardFitResizeQueued = false;
+  function scheduleBoardFit() {
+    if (boardFitResizeQueued) return;
+    boardFitResizeQueued = true;
+    requestAnimationFrame(() => {
+      boardFitResizeQueued = false;
+      fitSquareBoard(document.getElementById("admin-board"));
+    });
+  }
+  window.addEventListener("resize", scheduleBoardFit);
+  // Re-fit once more after every resource (fonts, icon sprite) has
+  // finished loading — a late swap can shift sibling heights slightly
+  // after the very first fit runs.
+  window.addEventListener("load", scheduleBoardFit);
+
   function bootAdmin() {
     if (bootStarted) return;
     bootStarted = true;
     buildAdminBoardSkeleton();
+    scheduleBoardFit();
     setupSideToggle("blue");
     cardFilterToggle("blue");
     wireToolbar();
@@ -680,6 +731,9 @@
   function renderTurnInstruction() {
     const el = document.getElementById("turn-instruction");
     if (!el || !state) return;
+    // Instruction text length/wrapping affects how much vertical room is
+    // left for the board — re-fit after this render pass completes.
+    scheduleBoardFit();
 
     if (state.phase === "setup") {
       el.className = "turn-instruction";
