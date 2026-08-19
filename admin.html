@@ -43,8 +43,7 @@
     <button class="btn btn-sm btn-ghost" id="end-turn-btn" disabled>End Turn</button>
     <button class="btn btn-sm btn-ghost" id="open-voting-btn" disabled>&#x1F4F1; Open Voting</button>
     <button class="btn btn-sm btn-ghost" id="reset-game-btn">Reset Board</button>
-    <button class="btn btn-sm btn-ghost" id="download-report-btn" style="display:none;">&#x1F4C4; Download Report (HTML)</button>
-    <button class="btn btn-sm btn-ghost" id="download-pdf-btn" style="display:none;">&#x1F5A8;&#xFE0F; Download PDF</button>
+    <button class="btn btn-sm btn-ghost" id="download-report-btn" style="display:none;">&#x1F4C4; Download Report</button>
     <span class="pill" id="setup-progress-pill" style="display:none;"><span class="pill-dot"></span><span id="setup-progress-text"></span></span>
     <span style="flex:1"></span>
     <span class="pill" id="phase-pill"><span class="pill-dot"></span><span id="phase-text">SETUP</span></span>
@@ -59,7 +58,8 @@
         <div class="panel-title">Setup &mdash; Place Pieces</div>
         <div class="helper-text">
           Select a side, pick a piece from the bank, then click an empty cell in that side's
-          deployment zone to place it. Blue deploys rows 5&ndash;7, Red deploys rows 0&ndash;2.
+          deployment zone to place it. Blue deploys rows 3&ndash;5, Red deploys rows 0&ndash;1
+          (row 2 is the DMZ).
         </div>
         <div class="turn-side-toggle" style="padding: 0 12px 10px;">
           <button class="btn btn-sm btn-blue" id="setup-side-blue">Blue Bank</button>
@@ -117,7 +117,7 @@
     </div>
 
     <!-- CENTER COLUMN: full-visibility board -->
-    <div class="panel section">
+    <div class="panel section admin-board-col">
       <div class="panel-title">Tactical Board &mdash; Full Visibility</div>
       <div class="section-body" style="padding:6px 8px;">
         <div id="turn-instruction" class="turn-instruction"></div>
