@@ -523,6 +523,7 @@ body{padding:12px;display:flex;flex-direction:column;gap:10px;max-width:480px;ma
     const { row, col } = parseCellKey(cellKey);
     const unit = gameState.board[cellKey];
     if (!unit) return false;
+    if (unit.standDownTurnsLeft > 0) return false;
     const def = getPieceDef(cellKey);
     if (def && def.movable === false) return false;
     const neighbors = [[row-1,col],[row+1,col],[row,col-1],[row,col+1]];
@@ -573,8 +574,10 @@ body{padding:12px;display:flex;flex-direction:column;gap:10px;max-width:480px;ma
             piece.className = `mini-piece my-side ${myTeam}${boxed?" boxed":""}${selectedFromCell===key?" selected-piece":""}`;
             piece.textContent = def ? def.short : "?";
           } else {
-            piece.className = "mini-piece enemy";
+            const stoodDown = unit.standDownTurnsLeft > 0; // always revealed by the time this is true
+            piece.className = `mini-piece enemy${stoodDown ? " boxed" : ""}`;
             piece.textContent = unit.revealed ? (getPieceDef(key)||{short:"?"}).short : "?";
+            if (stoodDown) piece.title = "Stood down — recovering";
           }
           cell.appendChild(piece);
         }
