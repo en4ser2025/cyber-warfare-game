@@ -539,6 +539,19 @@ const BLUE_SETUP_ROWS = [3, 4, 5];   // Blue deploys in these rows
 const RED_SETUP_ROWS  = [0, 1];      // Red deploys in these rows
 const NEUTRAL_ROWS    = [2];         // No-man's land / single DMZ line
 
+// Losing a clash affects HUMAN pieces (nature:"human") differently from
+// SYSTEM/TECHNICAL pieces: a person isn't erased from the game when they
+// lose a clash, so they stand down (can't move or fight) for this many of
+// their own side's upcoming turns, then automatically return to duty.
+// System/technical pieces (a firewall, a piece of malware) can genuinely
+// be destroyed/taken offline, so they're still permanently eliminated.
+const STAND_DOWN_TURNS = 2;
+
+// When a side has zero currently-active humans (all stood down), nobody is
+// left to monitor/operate its remaining systems — they become easier to
+// beat in a clash. Applied as a flat swing to attacker odds in gameEngine.js.
+const UNMANNED_SYSTEM_PENALTY = 15;
+
 // Detection meter: when it reaches DETECTION_MAX, SOC catches the
 // intrusion in progress -> Blue wins immediately regardless of position.
 const DETECTION_MAX = 100;
@@ -628,6 +641,7 @@ if (typeof module !== "undefined" && module.exports) {
     IT_BLUE_PIECES, IT_RED_PIECES, IT_SCENARIO_CARDS,
     OT_BLUE_PIECES, OT_RED_PIECES, OT_SCENARIO_CARDS,
     BOARD_SIZE, BLUE_SETUP_ROWS, RED_SETUP_ROWS, NEUTRAL_ROWS, DETECTION_MAX, PROCESS_MAX,
+    STAND_DOWN_TURNS, UNMANNED_SYSTEM_PENALTY,
     GAME_PACKS, DEFAULT_MODE, setActivePack, getActivePack, getPack
   };
 }
