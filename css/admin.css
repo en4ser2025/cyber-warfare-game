@@ -2,6 +2,12 @@
    CYBER GRID :: ADMIN STYLES
    ============================================================ */
 
+/* theme.css only sets min-height:100vh on html/body, so any sub-pixel
+   overflow (font metrics, rounding) can trigger a page scrollbar, which
+   eats into the viewport width the board's square-fit math relies on.
+   Pin it down the same way board.css does for the public display. */
+html, body { height: 100%; overflow: hidden; margin: 0; padding: 0; }
+
 /* --- PIN gate --- */
 .pin-gate {
   min-height: 100vh;
@@ -50,13 +56,46 @@
   display: grid;
   grid-template-columns: 300px 1fr 360px;
   gap: 12px;
-  align-items: start;
+  align-items: stretch;
   flex: 1;
   min-height: 0;
   overflow: hidden;
 }
-@media (max-width: 1400px) {
+
+/* Center (board) column: a flex column so the board fills exactly the
+   space left over after the panel title / turn instruction / hint text,
+   instead of a fixed-pixel max-height guess that can overflow on shorter
+   screens. Mirrors the same fitting approach used on the public board. */
+.admin-board-col {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+.admin-board-col .section-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  align-items: center;
+}
+.admin-board-col .turn-instruction,
+.admin-board-col .helper-text {
+  flex: 0 0 auto;
+  width: 100%;
+}
+/* Below this width even a 300px+360px side-panel budget doesn't leave a
+   sane square board in the middle, so fall back to a scrolling single
+   column. Kept narrow (900px) so common laptop widths (1366, 1280, 1024)
+   stay on the single-screen 3-column layout above. */
+@media (max-width: 900px) {
   .admin-grid { grid-template-columns: 1fr; overflow-y: auto; }
+  /* In the stacked/scrolling layout the flex column has no definite
+     height to fill (the grid row is now content-sized, not stretched),
+     so flex:1 1 auto on .admin-board would collapse to ~0. Give the
+     board column a real height budget to flex within instead. */
+  .admin-board-col { min-height: 70vh; }
 }
 
 .section { padding: 0; }
@@ -92,11 +131,15 @@
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   grid-template-rows: repeat(6, 1fr);
-  width: 100%;
-  /* Cap height so all 8 rows are always visible within a single screen.
-     calc: 100vh minus toolbar (~50px) minus instruction banner (~44px)
-     minus panel title (~34px) minus section padding (~20px) minus gaps (~30px) */
-  max-height: calc(100vh - 210px);
+  /* Sized in JS (fitSquareBoard in admin.js) to the largest square that
+     fits BOTH the column's available width and the leftover vertical
+     space after the panel title / instruction / hint text, so it always
+     fits on screen with no scrolling at any window size. flex:none so the
+     JS-set pixel size isn't fought/re-grown by flexbox; aspect-ratio and
+     max-width are just a sane fallback before JS runs on first paint. */
+  flex: none;
+  max-width: 100%;
+  max-height: 100%;
   aspect-ratio: 1 / 1;
   border-radius: var(--radius-md);
   overflow: hidden;

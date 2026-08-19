@@ -159,6 +159,11 @@ html, body { height: 100%; overflow: hidden; margin: 0; padding: 0; }
 }
 @media (max-width: 1000px) {
   .main-grid { grid-template-columns: 1fr; overflow-y: auto; }
+  /* In the stacked/scrolling layout the grid row is content-sized rather
+     than stretched, so .board-wrap has no definite height to give the
+     board (which would otherwise collapse toward 0). Give it a real
+     height budget to fit within instead. */
+  .board-wrap { min-height: 70vh; }
 }
 
 /* ---- Roster panels ---- */
@@ -238,12 +243,14 @@ html, body { height: 100%; overflow: hidden; margin: 0; padding: 0; }
   display: grid;
   grid-template-columns: repeat(6, 1fr);
   grid-template-rows: repeat(6, 1fr);
-  /* Height-driven square that fills the row but never exceeds the visible
-     area. The vh cap guarantees the whole 6x6 board stays on screen (the
-     bottom scenario-card row + header are reserved), matching the admin board;
-     max-width keeps it square within the centre column. */
+  /* Sized in JS (fitSquareBoard in board.js) to the largest square that
+     fits BOTH the centre column's available width and height, so it
+     always fits on screen with no scrolling at any window size. The
+     rules below are just a sane fallback before JS runs on first paint.
+     flex:none stops .board-wrap (a column flex container) from applying
+     its default flex-shrink to the JS-set pixel height. */
+  flex: none;
   height: 100%;
-  max-height: calc(100vh - 175px);
   aspect-ratio: 1 / 1;
   max-width: 100%;
   margin: 0 auto;
