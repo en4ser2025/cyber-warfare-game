@@ -270,6 +270,63 @@ a { color: var(--blue-core); }
   100% { transform: translate(var(--dx), var(--dy)) scale(0); opacity: 0; }
 }
 
+/* ============================================================
+   PIECE STAND-DOWN (human pieces that lost a clash)
+   Unlike elimination, the piece stays on the board — it's
+   incapacitated in place, not removed — so this is a lighter,
+   non-destructive pulse rather than the zap-out burst above.
+   ============================================================ */
+@keyframes standdown-cell {
+  0%   { background: inherit; }
+  20%  { background: rgba(255,182,39,0.55); }
+  100% { background: inherit; }
+}
+.stand-down-flash {
+  animation: standdown-cell 0.7s ease-out forwards;
+}
+
+/* Persistent look for a piece currently stood down: dimmed, desaturated,
+   with a small recovery-countdown badge. Applies to both the public
+   board's .piece and the admin console's .admin-piece. */
+.piece.stood-down,
+.admin-piece.stood-down {
+  opacity: 0.5;
+  filter: grayscale(0.7);
+}
+.piece.stood-down::before,
+.admin-piece.stood-down::before {
+  content: "\23F8";  /* pause symbol */
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  font-size: 8px;
+  line-height: 1;
+  background: var(--amber, #ffb627);
+  color: #1a1400;
+  border-radius: 50%;
+  width: 12px;
+  height: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+.stand-down-turns-badge {
+  position: absolute;
+  bottom: -3px;
+  right: -3px;
+  font-family: var(--font-mono, 'Consolas', monospace);
+  font-size: 7px;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--bg-void, #0a0e14);
+  color: var(--amber, #ffb627);
+  border: 1px solid var(--amber, #ffb627);
+  border-radius: 3px;
+  padding: 1px 3px;
+  z-index: 5;
+}
+
 /* ---- Vestinex copyright footer (all screens) ---- */
 .copyright-footer {
   position: fixed;
