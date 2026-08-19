@@ -18,7 +18,7 @@
     })
     .catch(err => console.error("Failed to load icon sprite:", err));
 
-  // ---- Build the 64-cell grid skeleton once ----
+  // ---- Build the 36-cell grid skeleton once ----
   const boardEl = document.getElementById("board");
   function buildBoardSkeleton() {
     boardEl.innerHTML = "";

@@ -57,7 +57,6 @@
     wireDetectionControls();
     wireOTControls();
     wireReportButton();
-    wirePdfButton();
     wireResolvePanel();
 
     FireState.subscribe((s, err) => {
@@ -190,9 +189,12 @@
 
   /**
    * Randomly place all Blue and Red pieces in their respective deployment zones.
-   * Blue gets rows 5-7 (24 cells, exactly matching Blue's 24 pieces).
-   * Red gets rows 0-2 (24 cells available, 20 pieces placed, 4 cells left empty at random).
+   * Blue gets BLUE_SETUP_ROWS, Red gets RED_SETUP_ROWS (a single NEUTRAL_ROWS
+   * row — the DMZ — separates them). Cell counts are sized to each side's
+   * roster, with any leftover cells in a zone left empty at random.
    * Pieces are shuffled before placement so every run produces a unique layout.
+   * After placement, each side's front row (the row nearest the DMZ) has its
+   * movable pieces revealed on the public board — everything else stays locked.
    */
   function randomSetup() {
     function shuffle(arr) {
@@ -215,9 +217,9 @@
     });
     const shuffledBlue = shuffle(blueInstances);
 
-    // Blue cells: all 24 cells in rows 5-7, also shuffled so pieces land in random positions
+    // Blue cells: all cells in BLUE_SETUP_ROWS, also shuffled so pieces land in random positions
     const blueCells = shuffle(
-      [5, 6, 7].flatMap(row => Array.from({ length: 8 }, (_, col) => cellKey(row, col)))
+      BLUE_SETUP_ROWS.flatMap(row => Array.from({ length: BOARD_SIZE }, (_, col) => cellKey(row, col)))
     );
     shuffledBlue.forEach((piece, i) => { board[blueCells[i]] = piece; });
 
@@ -230,11 +232,28 @@
     });
     const shuffledRed = shuffle(redInstances);
 
-    // Red cells: 24 available but only 20 pieces — pick 20 random cells from rows 0-2
+    // Red cells: pick as many random cells from RED_SETUP_ROWS as Red has pieces
     const redCells = shuffle(
-      [0, 1, 2].flatMap(row => Array.from({ length: 8 }, (_, col) => cellKey(row, col)))
+      RED_SETUP_ROWS.flatMap(row => Array.from({ length: BOARD_SIZE }, (_, col) => cellKey(row, col)))
     ).slice(0, shuffledRed.length); // take only as many cells as there are pieces
     shuffledRed.forEach((piece, i) => { board[redCells[i]] = piece; });
+
+    // Reveal each side's front row (the setup row nearest the DMZ) so the
+    // Participants view shows real movable-piece icons there instead of
+    // locked ones. Non-movable pieces (e.g. the objective) stay hidden even
+    // if they land on the front row. Everything behind the front row stays
+    // locked until the existing reveal-on-clash rules uncover it.
+    const blueFrontRow = Math.min(...BLUE_SETUP_ROWS);
+    const redFrontRow = Math.max(...RED_SETUP_ROWS);
+    Object.entries(board).forEach(([key, unit]) => {
+      const { row } = parseCellKey(key);
+      const def = GameEngine.findPieceDef(unit.pieceId);
+      const isFrontRow = (unit.side === "blue" && row === blueFrontRow) ||
+                          (unit.side === "red" && row === redFrontRow);
+      if (isFrontRow && def && def.movable !== false) {
+        unit.revealed = true;
+      }
+    });
 
     // Write fresh state with the populated board, preserving the chosen mode
     const currentMode = (state && state.mode) || ACTIVE_MODE || DEFAULT_MODE;
@@ -242,7 +261,7 @@
     newState.board = board;
     state = newState;
     FireState.set(newState);
-    logEvent("system", "Pieces randomly deployed. Review positions then click Start Game.");
+    logEvent("system", "Pieces randomly deployed. Front-row units revealed. Review positions then click Start Game.");
   }
 
   function confirmAction(title, body, onConfirm) {
@@ -1162,33 +1181,8 @@
 
   function renderReportButton() {
     const btn = document.getElementById("download-report-btn");
-    const pdfBtn = document.getElementById("download-pdf-btn");
-    const show = (state && state.phase === "ended" && state.winner);
-    if (btn) btn.style.display = show ? "" : "none";
-    if (pdfBtn) pdfBtn.style.display = show ? "" : "none";
-  }
-
-  function wirePdfButton() {
-    const btn = document.getElementById("download-pdf-btn");
     if (!btn) return;
-    btn.addEventListener("click", () => {
-      if (!state || typeof Assessment === "undefined") return;
-      let html;
-      try { html = Assessment.buildReportHTML(state); }
-      catch (e) { flashHint("Could not generate the report."); return; }
-
-      // Open the report in a new window and trigger the browser's print dialog.
-      // The facilitator chooses "Save as PDF" as the destination. No library
-      // needed, and the report's @media print styles give a clean page.
-      const w = window.open("", "_blank");
-      if (!w) { flashHint("Please allow pop-ups to download the PDF."); return; }
-      // Auto-open the print dialog once the report has rendered.
-      const trigger = `<script>window.onload=function(){setTimeout(function(){window.print();},350);};<\/script>`;
-      w.document.open();
-      w.document.write(html.replace("</body>", trigger + "</body>"));
-      w.document.close();
-      logEvent("system", "Assessment report opened for PDF export.");
-    });
+    btn.style.display = (state && state.phase === "ended" && state.winner) ? "" : "none";
   }
 
   /** Show/hide OT controls and refresh their values based on the current mode/state. */
