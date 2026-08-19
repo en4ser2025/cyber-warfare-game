@@ -10,7 +10,10 @@ const GameEngine = (function () {
    * Resolve a clash between an attacking piece and a defending piece.
    * @param {Object} attacker   { pieceId, side, rank, scenarioCardId }
    * @param {Object} defender   { pieceId, side, rank, scenarioCardId }
-   * @param {Object} opts       { roll: number 0-100 (optional, auto-rolled if absent) }
+   * @param {Object} opts       { roll: number 0-100 (optional, auto-rolled if absent),
+   *                              attackerSideUnmanned: bool — attacker's side has zero
+   *                                active humans right now (all stood down),
+   *                              defenderSideUnmanned: bool — same, for the defender's side }
    * @returns {Object} resolution result
    */
   function resolveClash(attacker, defender, opts = {}) {
@@ -51,6 +54,17 @@ const GameEngine = (function () {
       attackerOdds -= 8;   // a person alone struggles to defeat a hardened system head-on
     }
     // (technical vs human is blocked upstream and never reaches here)
+
+    // Unmanned-systems penalty: if a side has no active humans left (every
+    // human on that side is currently stood down), nobody is left to
+    // monitor or operate its remaining system/technical pieces, making
+    // them easier to beat — whichever side that piece is on.
+    if (opts.attackerSideUnmanned && atkNature !== "human") {
+      attackerOdds -= UNMANNED_SYSTEM_PENALTY;
+    }
+    if (opts.defenderSideUnmanned && defNature !== "human") {
+      attackerOdds += UNMANNED_SYSTEM_PENALTY;
+    }
 
     // Clamp to a sane range — even the best play shouldn't be a 100% lock
     // (keeps the game from feeling pre-determined), and even the worst

@@ -100,12 +100,20 @@
       const isObjective = def?.isObjective;
 
       if (unit.revealed) {
-        piece.className = `piece ${unit.side}${isObjective ? " objective" : ""}`;
+        const stoodDown = unit.standDownTurnsLeft > 0;
+        piece.className = `piece ${unit.side}${isObjective ? " objective" : ""}${stoodDown ? " stood-down" : ""}`;
         piece.innerHTML = `<svg><use href="#icon-${def?.icon || "shield"}"></use></svg>`;
         const tag = document.createElement("div");
         tag.className = "piece-rank-tag";
         tag.textContent = def?.short || "?";
         piece.appendChild(tag);
+        if (stoodDown) {
+          const badge = document.createElement("div");
+          badge.className = "stand-down-turns-badge";
+          badge.title = "Stood down — recovering";
+          badge.textContent = unit.standDownTurnsLeft;
+          piece.appendChild(badge);
+        }
       } else {
         piece.className = `piece hidden ${unit.side}-side`;
         piece.innerHTML = `<svg><use href="#icon-locked"></use></svg>`;

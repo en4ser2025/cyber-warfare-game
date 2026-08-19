@@ -231,7 +231,11 @@
       const nextTurnNumber = next === "blue" ? (state.turnNumber || 1) + 1 : state.turnNumber || 1;
       const nextTurnKey = "t" + nextTurnNumber + "-" + next;
       selectedCell = null; selectedCardId = null;
-      FireState.update({ turn: next, turnNumber: nextTurnNumber, turnKey: nextTurnKey, activeScenario: null, votes: {}, votePhase: "move", voteDeadline: null, pendingClashMove: null });
+      const boardCopy = { ...state.board };
+      const recovered = tickStandDowns(boardCopy, next);
+      state.board = boardCopy;
+      recovered.forEach(u => logEvent(next, `${pieceLabel(u)} is back on duty.`));
+      FireState.update({ board: boardCopy, turn: next, turnNumber: nextTurnNumber, turnKey: nextTurnKey, activeScenario: null, votes: {}, votePhase: "move", voteDeadline: null, pendingClashMove: null });
       if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
       const wrap = document.getElementById("admin-timer-wrap");
       if (wrap) wrap.style.display = "none";
@@ -263,7 +267,7 @@
     const blueInstances = [];
     BLUE_PIECES.forEach(p => {
       for (let i = 0; i < p.count; i++) {
-        blueInstances.push({ side: "blue", pieceId: p.id, instanceId: `blue-${p.id}-${i+1}`, revealed: false, eliminated: false });
+        blueInstances.push({ side: "blue", pieceId: p.id, instanceId: `blue-${p.id}-${i+1}`, revealed: false, eliminated: false, standDownTurnsLeft: 0 });
       }
     });
     const shuffledBlue = shuffle(blueInstances);
@@ -278,7 +282,7 @@
     const redInstances = [];
     RED_PIECES.forEach(p => {
       for (let i = 0; i < p.count; i++) {
-        redInstances.push({ side: "red", pieceId: p.id, instanceId: `red-${p.id}-${i+1}`, revealed: false, eliminated: false });
+        redInstances.push({ side: "red", pieceId: p.id, instanceId: `red-${p.id}-${i+1}`, revealed: false, eliminated: false, standDownTurnsLeft: 0 });
       }
     });
     const shuffledRed = shuffle(redInstances);
@@ -437,7 +441,8 @@
         pieceId: setupSelectedPieceId,
         instanceId,
         revealed: false,
-        eliminated: false
+        eliminated: false,
+        standDownTurnsLeft: 0
       };
       FireState.update({ board: state.board });
       renderSetupBank();
@@ -459,6 +464,10 @@
         const def = GameEngine.findPieceDef(unit.pieceId);
         if (def && def.movable === false) {
           flashHint("This piece cannot move.");
+          return;
+        }
+        if (unit.standDownTurnsLeft > 0) {
+          flashHint(`Stood down — back on duty in ${unit.standDownTurnsLeft} more of ${unit.side === "blue" ? "Blue" : "Red"}'s turn(s).`);
           return;
         }
         if (!hasLegalAdjacentMove(key)) {
@@ -562,7 +571,11 @@
     selectedCardId = null;
     setTimeout(() => {
       if (!state || state.phase !== "playing") return;
-      FireState.update({ turn: next, turnNumber: nextTurnNumber, turnKey: nextTurnKey, activeScenario: null, votes: {}, votePhase: "move", voteDeadline: null, pendingClashMove: null });
+      const boardCopy = { ...state.board };
+      const recovered = tickStandDowns(boardCopy, next);
+      state.board = boardCopy;
+      FireState.update({ board: boardCopy, turn: next, turnNumber: nextTurnNumber, turnKey: nextTurnKey, activeScenario: null, votes: {}, votePhase: "move", voteDeadline: null, pendingClashMove: null });
+      recovered.forEach(u => logEvent(next, `${pieceLabel(u)} is back on duty.`));
       logEvent("system", `Turn ended — now ${next.toUpperCase()}'s turn (#${nextTurnNumber}). Click "Open Voting" when ready.`);
       setStat("turnsPlayed", (state.stats && state.stats.turnsPlayed || 0) + 1);
       // Clear any running countdown
@@ -644,16 +657,25 @@
       if (!cellEl) return;
       const def = GameEngine.findPieceDef(unit.pieceId);
       const piece = document.createElement("div");
-      piece.className = `admin-piece ${unit.side}`;
+      const stoodDown = unit.standDownTurnsLeft > 0;
+      piece.className = `admin-piece ${unit.side}${stoodDown ? " stood-down" : ""}`;
 
       const isCurrentTurnSide = state.phase === "playing" && unit.side === state.turn;
       const isImmovableType = def && def.movable === false;
-      if (isCurrentTurnSide && !isImmovableType && !hasLegalAdjacentMove(key)) {
+      if (isCurrentTurnSide && !isImmovableType && !stoodDown && !hasLegalAdjacentMove(key)) {
         piece.className += " boxed-in";
         piece.title = "Boxed in — no legal move this turn";
+      } else if (stoodDown) {
+        piece.title = `Stood down — back on duty in ${unit.standDownTurnsLeft} more of ${unit.side === "blue" ? "Blue" : "Red"}'s turn(s)`;
       }
 
       piece.innerHTML = `<svg><use href="#icon-${def?.icon || "shield"}"></use></svg><span class="rank-badge">${def?.short || "?"}</span>`;
+      if (stoodDown) {
+        const badge = document.createElement("span");
+        badge.className = "stand-down-turns-badge";
+        badge.textContent = unit.standDownTurnsLeft;
+        piece.appendChild(badge);
+      }
       cellEl.appendChild(piece);
     });
 
@@ -710,6 +732,31 @@
     state.eliminated = state.eliminated || { blue: {}, red: {} };
     state.eliminated[side] = state.eliminated[side] || {};
     state.eliminated[side][pieceId] = (state.eliminated[side][pieceId] || 0) + 1;
+  }
+
+  /** True if `side` has at least one human-nature piece on the board that
+   *  is neither eliminated nor currently stood down — i.e. someone is
+   *  actually available to operate/monitor that side's systems. */
+  function sideHasActiveHuman(side, board) {
+    return Object.values(board || (state && state.board) || {}).some(u => {
+      if (!u || u.side !== side || u.eliminated || u.standDownTurnsLeft > 0) return false;
+      const def = GameEngine.findPieceDef(u.pieceId);
+      return def && def.nature === "human";
+    });
+  }
+
+  /** Decrement standDownTurnsLeft for every one of `side`'s units on
+   *  `board` (mutated in place) as that side's turn comes up. Returns the
+   *  units that just reached 0 (recovered) so callers can log it. */
+  function tickStandDowns(board, side) {
+    const recovered = [];
+    Object.values(board).forEach(u => {
+      if (u && u.side === side && u.standDownTurnsLeft > 0) {
+        u.standDownTurnsLeft -= 1;
+        if (u.standDownTurnsLeft === 0) recovered.push(u);
+      }
+    });
+    return recovered;
   }
 
   function renderDetection() {
@@ -942,7 +989,11 @@
     const result = GameEngine.resolveClash(
       { pieceId: fromUnit.pieceId, side: fromUnit.side, rank: GameEngine.findPieceDef(fromUnit.pieceId).rank, scenarioCardId: (selectedCardId && cardFilterSide===fromUnit.side) ? selectedCardId : null },
       { pieceId: toUnit.pieceId, side: toUnit.side, rank: GameEngine.findPieceDef(toUnit.pieceId).rank, scenarioCardId: (selectedCardId && cardFilterSide===toUnit.side) ? selectedCardId : null },
-      { roll }
+      {
+        roll,
+        attackerSideUnmanned: !sideHasActiveHuman(fromUnit.side),
+        defenderSideUnmanned: !sideHasActiveHuman(toUnit.side)
+      }
     );
     document.getElementById("odds-num").textContent = result.attackerOdds + "%";
     document.getElementById("odds-num").style.color = result.attackerOdds >= 50 ? "var(--red-core)" : "var(--blue-core)";
@@ -970,7 +1021,11 @@
     const result = GameEngine.resolveClash(
       { pieceId: fromUnit.pieceId, side: fromUnit.side, rank: atkDef.rank, scenarioCardId: attackerCardId },
       { pieceId: toUnit.pieceId, side: toUnit.side, rank: defDef.rank, scenarioCardId: defenderCardId },
-      { roll, flags }
+      {
+        roll, flags,
+        attackerSideUnmanned: !sideHasActiveHuman(fromUnit.side),
+        defenderSideUnmanned: !sideHasActiveHuman(toUnit.side)
+      }
     );
 
     // Reveal both pieces publicly
@@ -993,7 +1048,24 @@
       eliminatedCopy[side][pieceId] = (eliminatedCopy[side][pieceId] || 0) + 1;
     }
 
-    if (result.outcome === "attacker") {
+    // Who lost, and what are they?
+    const attackerWon = result.outcome === "attacker";
+    const loserUnit = attackerWon ? toUnit : fromUnit;
+    const loserDef = attackerWon ? defDef : atkDef;
+    const loserKey = attackerWon ? toKey : fromKey;
+    const loserIsHuman = loserDef.nature === "human";
+
+    if (loserIsHuman) {
+      // A person isn't erased from the game by losing a clash — they stand
+      // down (can't move or fight) for a few of their own side's upcoming
+      // turns, then automatically return to duty. No territory changes
+      // hands: they're incapacitated in place, not removed from the cell.
+      loserUnit.standDownTurnsLeft = STAND_DOWN_TURNS;
+      const { row: sdRow, col: sdCol } = parseCellKey(loserKey);
+      triggerStandDownAnimation(sdRow, sdCol);
+      boardCopy[fromKey] = fromUnit;
+      boardCopy[toKey] = toUnit;
+    } else if (attackerWon) {
       if (defDef.isObjective) {
         serverBreached = true;
       }
@@ -1110,8 +1182,12 @@
     }
   }
 
+  // "Alive" for the attrition win check means currently ACTIVE — not
+  // permanently eliminated (a destroyed system) and not stood down (an
+  // incapacitated human who'll be back). A side loses this way only when
+  // every one of its pieces is down at the same moment.
   function countAlive(side, pieceId, board) {
-    return Object.values(board).filter(u => u && u.side === side && u.pieceId === pieceId && !u.eliminated).length;
+    return Object.values(board).filter(u => u && u.side === side && u.pieceId === pieceId && !u.eliminated && !(u.standDownTurnsLeft > 0)).length;
   }
 
   /** Accumulate an assessment stat on the game state (Stage 5). */
@@ -1693,6 +1769,19 @@
     cellEl.classList.add("zap-out");
     setTimeout(() => {
       cellEl.classList.remove("zap-out");
+      renderAdminBoard();
+    }, 700);
+  }
+
+  /** Trigger the (lighter, non-destructive) stand-down flash on a board
+   *  cell — the piece stays put, so this shouldn't read as "gone". */
+  function triggerStandDownAnimation(row, col) {
+    const cellId = `admin-cell-${row}-${col}`;
+    const cellEl = document.getElementById(cellId);
+    if (!cellEl) return;
+    cellEl.classList.add("stand-down-flash");
+    setTimeout(() => {
+      cellEl.classList.remove("stand-down-flash");
       renderAdminBoard();
     }, 700);
   }
