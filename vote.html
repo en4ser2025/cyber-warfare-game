@@ -104,7 +104,7 @@ body{padding:12px;display:flex;flex-direction:column;gap:10px;max-width:480px;ma
 .mini-board-wrap{display:flex;flex-direction:column;gap:6px;}
 .mini-board-label{font-family:var(--font-mono);font-size:10px;color:var(--text-low);text-align:center;}
 
-.mini-board{display:grid;grid-template-columns:repeat(8,1fr);grid-template-rows:repeat(8,1fr);width:100%;aspect-ratio:1/1;border-radius:6px;overflow:hidden;border:2px solid var(--line);touch-action:none;}
+.mini-board{display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(6,1fr);width:100%;aspect-ratio:1/1;border-radius:6px;overflow:hidden;border:2px solid var(--line);touch-action:none;}
 
 .mini-cell{position:relative;display:flex;align-items:center;justify-content:center;background:#0b1019;border:1px solid rgba(125,165,220,0.10);cursor:pointer;transition:background 0.1s;}
 .mini-cell.zone-blue{background:rgba(61,169,252,0.04);}
@@ -260,7 +260,7 @@ body{padding:12px;display:flex;flex-direction:column;gap:10px;max-width:480px;ma
   let myCardVoteTurn = localStorage.getItem("cybergrid_cardTurn") || null;
   let myMoveVoteTurn = localStorage.getItem("cybergrid_moveTurn") || null;
 
-  const BOARD_SIZE = 8;
+  const BOARD_SIZE = 6;
 
   // ---- DOM refs ----
   const screens = {
@@ -548,7 +548,7 @@ body{padding:12px;display:flex;flex-direction:column;gap:10px;max-width:480px;ma
       for (let col = 0; col < BOARD_SIZE; col++) {
         const key = row + "," + col;
         const cell = document.createElement("div");
-        const zone = row<=2?"red":(row>=5?"blue":"dmz");
+        const zone = zoneForRow(row);
         cell.className = "mini-cell zone-" + zone;
 
         // Highlight states
