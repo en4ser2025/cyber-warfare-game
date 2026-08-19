@@ -37,12 +37,12 @@ const IT_BLUE_PIECES = [
   },
   {
     id: "fw", name: "Firewall", short: "FW", rank: RANK.FIREWALL,
-    count: 2, nature: "system", icon: "firewall", movable: true,
+    count: 1, nature: "system", icon: "firewall", movable: true,
     flavor: "Stops nearly everything cold. Only a zero-day EXPLOIT gets through."
   },
   {
     id: "honeypot", name: "Honeypot", short: "HP", rank: RANK.HONEYPOT,
-    count: 2, nature: "system", icon: "honeypot", movable: true, special: "trap",
+    count: 1, nature: "system", icon: "honeypot", movable: true, special: "trap",
     flavor: "Looks weak. Lures attackers in, then quietly identifies and traps them."
   },
   {
@@ -52,32 +52,32 @@ const IT_BLUE_PIECES = [
   },
   {
     id: "soc", name: "SOC Lead", short: "SOC", rank: RANK.SOC_LEAD,
-    count: 2, nature: "human", icon: "soc", movable: true,
+    count: 1, nature: "human", icon: "soc", movable: true,
     flavor: "Runs the security operations center. Sharp eyes, sharp instincts."
   },
   {
     id: "responder", name: "Incident Responder", short: "IR", rank: RANK.RESPONDER,
-    count: 3, nature: "human", icon: "responder", movable: true,
+    count: 2, nature: "human", icon: "responder", movable: true,
     flavor: "First on scene when something breaks."
   },
   {
     id: "engineer", name: "Security Engineer", short: "ENG", rank: RANK.ENGINEER,
-    count: 3, nature: "human", icon: "engineer", movable: true,
+    count: 1, nature: "human", icon: "engineer", movable: true,
     flavor: "Builds and hardens the defenses."
   },
   {
     id: "sysadmin", name: "Sysadmin", short: "SYS", rank: RANK.SYSADMIN,
-    count: 3, nature: "human", icon: "sysadmin", movable: true,
+    count: 1, nature: "human", icon: "sysadmin", movable: true,
     flavor: "Keeps the lights on. Patches, backups, access control."
   },
   {
     id: "analyst", name: "SOC Analyst", short: "AN", rank: RANK.ANALYST,
-    count: 4, nature: "human", icon: "analyst", movable: true,
+    count: 2, nature: "human", icon: "analyst", movable: true,
     flavor: "Tier-1 eyes on glass. Numerous, but easily overrun."
   },
   {
     id: "intel", name: "Threat Intel", short: "TI", rank: RANK.INTEL,
-    count: 3, nature: "human", icon: "intel", movable: true, special: "recon",
+    count: 1, nature: "human", icon: "intel", movable: true, special: "recon",
     flavor: "Fast and weak, but can safely peek at an adjacent unrevealed piece."
   }
 ];
@@ -98,39 +98,39 @@ const IT_RED_PIECES = [
   },
   {
     id: "botmaster", name: "Botnet Master", short: "BOT", rank: RANK.SOC_LEAD,
-    count: 2, nature: "human", icon: "botmaster", movable: true,
+    count: 1, nature: "human", icon: "botmaster", movable: true,
     flavor: "Commands distributed swarms. Hard to pin down."
   },
   {
     id: "ransomware", name: "Ransomware Op", short: "RW", rank: RANK.RESPONDER,
-    count: 3, nature: "technical", icon: "ransomware", movable: true,
+    count: 2, nature: "technical", icon: "ransomware", movable: true,
     flavor: "Encrypts, then negotiates. Brutal but not untouchable."
   },
   {
     id: "insider", name: "Insider Threat", short: "INS", rank: RANK.ENGINEER,
-    count: 2, nature: "human", icon: "insider", movable: true, special: "disguise",
+    count: 1, nature: "human", icon: "insider", movable: true, special: "disguise",
     flavor: "Already has legitimate access. Hard to distinguish from staff."
   },
   {
     id: "socialeng", name: "Social Engineer", short: "SE", rank: RANK.SYSADMIN,
-    count: 3, nature: "human", icon: "socialeng", movable: true,
+    count: 1, nature: "human", icon: "socialeng", movable: true,
     flavor: "Talks their way past people, not firewalls."
   },
   {
     id: "phisher", name: "Phishing Crew", short: "PH", rank: RANK.ANALYST,
-    count: 4, nature: "human", icon: "phisher", movable: true,
+    count: 1, nature: "human", icon: "phisher", movable: true,
     flavor: "Casts a wide net. Numerous and disposable."
   },
   {
     id: "scanner", name: "Recon Scanner", short: "SCN", rank: RANK.INTEL,
-    count: 4, nature: "technical", icon: "scanner", movable: true, special: "recon",
+    count: 2, nature: "technical", icon: "scanner", movable: true, special: "recon",
     flavor: "Fast, weak, built for mapping the attack surface before committing forces."
   }
 ];
 
 // ================================================================
 //  OT / ICS ROSTERS (Stage 3)
-//  Same board math as IT (24 Blue / 20 Red, same deployment rows) so the
+//  Same board math as IT (12 Blue / 10 Red, same deployment rows) so the
 //  engine, quorum, and win-checks are unchanged. Counts are distributed to
 //  reflect OT asset scarcity: a few irreplaceable systems, many operators.
 //  Icons reuse the closest existing art; pieces marked customArt need
@@ -145,12 +145,12 @@ const OT_BLUE_PIECES = [
   },
   {
     id: "sis", name: "Safety Instrumented System", short: "SIS", rank: RANK.FIREWALL,
-    count: 2, nature: "system", icon: "shield", movable: true, customArt: true,
+    count: 1, nature: "system", icon: "shield", movable: true, customArt: true,
     flavor: "The last line of physical safety. Stops nearly every attack cold — and can force a safe-state trip (Stage 4)."
   },
   {
     id: "ews", name: "Engineering Workstation", short: "EWS", rank: RANK.HONEYPOT,
-    count: 2, nature: "system", icon: "firewall", movable: true, customArt: true,
+    count: 1, nature: "system", icon: "firewall", movable: true, customArt: true,
     flavor: "The console used to program the PLC. High-value: lose it and the attacker can push logic changes far more easily."
   },
   {
@@ -160,32 +160,32 @@ const OT_BLUE_PIECES = [
   },
   {
     id: "cslead", name: "Control Systems Lead", short: "CSL", rank: RANK.SOC_LEAD,
-    count: 2, nature: "human", icon: "soc", movable: true,
+    count: 1, nature: "human", icon: "soc", movable: true,
     flavor: "Runs the control room. Knows normal process behaviour cold."
   },
   {
     id: "proceng", name: "Process Engineer", short: "PE", rank: RANK.RESPONDER,
-    count: 3, nature: "human", icon: "responder", movable: true,
+    count: 2, nature: "human", icon: "responder", movable: true,
     flavor: "Understands safe operating limits. Key to judging when a safe-state trip is justified."
   },
   {
     id: "autoeng", name: "Automation Engineer", short: "AE", rank: RANK.ENGINEER,
-    count: 3, nature: "human", icon: "engineer", movable: true,
+    count: 1, nature: "human", icon: "engineer", movable: true,
     flavor: "Builds and hardens the control logic and integrations."
   },
   {
     id: "mainttech", name: "Maintenance Tech", short: "MT", rank: RANK.SYSADMIN,
-    count: 3, nature: "human", icon: "sysadmin", movable: true,
+    count: 1, nature: "human", icon: "sysadmin", movable: true,
     flavor: "Keeps the plant running. Patches only in scarce maintenance windows (Stage 4)."
   },
   {
     id: "operator", name: "Plant Operator", short: "OP", rank: RANK.ANALYST,
-    count: 4, nature: "human", icon: "analyst", movable: true,
+    count: 2, nature: "human", icon: "analyst", movable: true,
     flavor: "Frontline eyes on the process. Numerous, but easily misled by spoofed readings."
   },
   {
     id: "historian", name: "Historian", short: "HIST", rank: RANK.INTEL,
-    count: 3, nature: "system", icon: "intel", movable: true, special: "recon", customArt: true,
+    count: 1, nature: "system", icon: "intel", movable: true, special: "recon", customArt: true,
     flavor: "Logs process data. Fast to consult, but a soft target — can peek at an adjacent unrevealed piece."
   }
 ];
@@ -204,32 +204,32 @@ const OT_RED_PIECES = [
   },
   {
     id: "rdpabuser", name: "Remote-Access Abuser", short: "RDP", rank: RANK.SOC_LEAD,
-    count: 2, nature: "human", icon: "botmaster", movable: true, customArt: true,
+    count: 1, nature: "human", icon: "botmaster", movable: true, customArt: true,
     flavor: "Rides in on a compromised vendor / VPN account — one of the most common real OT vectors. Hard to distinguish from legitimate remote support."
   },
   {
     id: "plcmanip", name: "PLC Logic Manipulator", short: "PLCM", rank: RANK.RESPONDER,
-    count: 3, nature: "technical", icon: "ransomware", movable: true, customArt: true,
+    count: 2, nature: "technical", icon: "ransomware", movable: true, customArt: true,
     flavor: "Alters controller logic to drive the process out of bounds. Targets systems only — cannot engage humans."
   },
   {
     id: "pivot", name: "IT\u2192OT Pivot Actor", short: "PIVOT", rank: RANK.ENGINEER,
-    count: 2, nature: "human", icon: "insider", movable: true, special: "disguise",
+    count: 1, nature: "human", icon: "insider", movable: true, special: "disguise",
     flavor: "Crossed over from the IT network — the most common real path into OT. Blends in with routine traffic."
   },
   {
     id: "vendorimp", name: "Vendor Impersonator", short: "VND", rank: RANK.SYSADMIN,
-    count: 3, nature: "human", icon: "socialeng", movable: true,
+    count: 1, nature: "human", icon: "socialeng", movable: true,
     flavor: "Poses as trusted maintenance or integration staff. Talks past people, not controls."
   },
   {
     id: "hmispoofer", name: "HMI Spoofer", short: "HMI", rank: RANK.ANALYST,
-    count: 4, nature: "technical", icon: "phisher", movable: true, customArt: true,
+    count: 1, nature: "technical", icon: "phisher", movable: true, customArt: true,
     flavor: "Feeds operators false readings so they don't see the attack unfolding. Numerous. Targets systems."
   },
   {
     id: "otscanner", name: "OT Recon Scanner", short: "SCN", rank: RANK.INTEL,
-    count: 4, nature: "technical", icon: "scanner", movable: true, special: "recon",
+    count: 2, nature: "technical", icon: "scanner", movable: true, special: "recon",
     flavor: "Maps the control network before the real attack. Fast and weak."
   }
 ];
@@ -529,12 +529,15 @@ const OT_SCENARIO_CARDS = [
 // ----------------------------------------------------------------
 // BOARD CONSTANTS
 // ----------------------------------------------------------------
-const BOARD_SIZE = 8;
+const BOARD_SIZE = 6;
 
-// Row indices (0 = Red's back row .. 7 = Blue's back row)
-const BLUE_SETUP_ROWS = [5, 6, 7];   // Blue deploys in these rows
-const RED_SETUP_ROWS  = [0, 1, 2];   // Red deploys in these rows
-const NEUTRAL_ROWS    = [3, 4];      // No-man's land / DMZ
+// Row indices (0 = Red's back row .. 5 = Blue's back row)
+// Single DMZ row (row 2) separates the teams: Red gets 2 rows (12 cells),
+// Blue gets 3 rows (18 cells) — the asymmetry is unavoidable on an even
+// (6-row) board with exactly one neutral row; rosters are sized accordingly.
+const BLUE_SETUP_ROWS = [3, 4, 5];   // Blue deploys in these rows
+const RED_SETUP_ROWS  = [0, 1];      // Red deploys in these rows
+const NEUTRAL_ROWS    = [2];         // No-man's land / single DMZ line
 
 // Detection meter: when it reaches DETECTION_MAX, SOC catches the
 // intrusion in progress -> Blue wins immediately regardless of position.
