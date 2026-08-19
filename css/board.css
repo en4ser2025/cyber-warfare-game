@@ -236,10 +236,10 @@ html, body { height: 100%; overflow: hidden; margin: 0; padding: 0; }
 }
 .board {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  grid-template-rows: repeat(8, 1fr);
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(6, 1fr);
   /* Height-driven square that fills the row but never exceeds the visible
-     area. The vh cap guarantees the whole 8x8 board stays on screen (the
+     area. The vh cap guarantees the whole 6x6 board stays on screen (the
      bottom scenario-card row + header are reserved), matching the admin board;
      max-width keeps it square within the centre column. */
   height: 100%;

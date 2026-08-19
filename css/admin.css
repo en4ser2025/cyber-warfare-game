@@ -90,8 +90,8 @@
 /* --- Mini admin board (full visibility, both sides revealed) --- */
 .admin-board {
   display: grid;
-  grid-template-columns: repeat(8, 1fr);
-  grid-template-rows: repeat(8, 1fr);
+  grid-template-columns: repeat(6, 1fr);
+  grid-template-rows: repeat(6, 1fr);
   width: 100%;
   /* Cap height so all 8 rows are always visible within a single screen.
      calc: 100vh minus toolbar (~50px) minus instruction banner (~44px)
