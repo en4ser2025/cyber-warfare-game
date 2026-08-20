@@ -1061,6 +1061,7 @@
       // turns, then automatically return to duty. No territory changes
       // hands: they're incapacitated in place, not removed from the cell.
       loserUnit.standDownTurnsLeft = STAND_DOWN_TURNS;
+      bumpStat("standDowns." + loserUnit.side, 1);
       const { row: sdRow, col: sdCol } = parseCellKey(loserKey);
       triggerStandDownAnimation(sdRow, sdCol);
       boardCopy[fromKey] = fromUnit;
